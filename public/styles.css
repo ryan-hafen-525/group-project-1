@@ -112,3 +112,45 @@ code {
       height: 140px;
    }
 }
+
+/* === Geographic Filter Buttons === */
+.filters {
+   display: flex;
+   gap: 0.5rem;
+   flex-wrap: wrap;
+   margin: 1rem 0;
+}
+
+.filter-btn {
+   padding: 0.4rem 0.8rem;
+   border: 1px solid #ddd;
+   border-radius: 0.5rem;
+   background: #fff;
+   cursor: pointer;
+   font: inherit;
+   color: #111827;
+   transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.filter-btn:hover {
+   background: #f3f4f6;
+}
+
+.filter-btn[aria-pressed="true"] {
+   background: #e6f3ff;
+   border-color: #9cc7ff;
+}
+
+.grid .card.is-hidden {
+   display: none;
+}
+
+.chip {
+   font-size: 0.8rem;
+   color: #555;
+   background: #f3f4f6;
+   padding: 0.15rem 0.5rem;
+   border-radius: 999px;
+   display: inline-block;
+   margin-top: 0.3rem;
+}

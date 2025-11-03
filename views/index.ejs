@@ -18,11 +18,21 @@
       <main>
          <section class="container">
             <h2 class="sr-only">All locations</h2>
+            <div class="filters" role="toolbar" aria-label="Filter by geographic type">
+               <button class="filter-btn" type="button" data-filter="all" aria-pressed="true">All</button>
+               <button class="filter-btn" type="button" data-filter="island" aria-pressed="false">Island</button>
+               <button class="filter-btn" type="button" data-filter="inland" aria-pressed="false">Inland</button>
+               <button class="filter-btn" type="button" data-filter="coastal" aria-pressed="false">Coastal</button>
+             </div>
 
             <% if (destinations && destinations.length) { %>
             <div class="grid">
-               <% destinations.forEach(function(dest) { %> <% const imageSrc = dest.image_url || ''; %>
-               <article class="card">
+               <% destinations.forEach(function(dest) { 
+                  const imageSrc = dest.image_url || '';
+                  const geoRaw = (dest.geographicName || dest.GeographicName || dest.geographic || '').toString().toLowerCase();
+                  const geo = geoRaw === 'costal' ? 'coastal' : geoRaw; 
+               %>
+               <article class="card" data-geo="<%= geo %>">
                   <div class="card-media">
                      <% if (imageSrc) { %>
                      <img src="<%= imageSrc %>" alt="Photo of <%= dest.vacationName %>" loading="lazy" />
@@ -34,7 +44,10 @@
                   </div>
                   <div class="card-body">
                      <h3 class="card-title"><%= dest.vacationName || 'Unnamed location' %></h3>
-                  </div>
+                     <% if (geo) { %>
+                        <span class="chip"><%= geo.charAt(0).toUpperCase() + geo.slice(1) %></span>
+                     <% } %>
+                     </div>
                </article>
                <% }); %>
             </div>
@@ -43,5 +56,38 @@
             <% } %>
          </section>
       </main>
+
+      <script>
+      (function(){
+        const buttons = document.querySelectorAll('.filter-btn');
+        const cards = document.querySelectorAll('.grid .card');
+
+        // Optional: preselect using ?geo=island|inland|coastal
+        const params = new URLSearchParams(location.search);
+        const initial = (params.get('geo') || 'all').toLowerCase();
+        setFilter(initial);
+
+        buttons.forEach(btn => {
+          btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+        });
+
+        function setFilter(filter) {
+          const normalized = (filter === 'costal') ? 'coastal' : filter;
+          buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
+
+          if (normalized === 'all') {
+            cards.forEach(c => c.classList.remove('is-hidden'));
+            return;
+          }
+
+          cards.forEach(card => {
+            const cardGeo = (card.getAttribute('data-geo') || '').toLowerCase();
+            if (cardGeo === normalized) card.classList.remove('is-hidden');
+            else card.classList.add('is-hidden');
+          });
+        }
+      })();
+    </script>
+
    </body>
 </html>
