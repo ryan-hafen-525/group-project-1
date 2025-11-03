@@ -22,21 +22,42 @@ app.set("views", path.join(__dirname, "views"));
 app.use("/static", express.static(path.join(__dirname, "public")));
 
 // Routes rendering EJS views
-app.get("/", (req, res) => {
-   // Mirror the /destinations behavior: try to load from the DB when knex is configured,
-   // otherwise fall back to demo data so the root path always shows the destinations grid.
-  knex
-      .select("*")
-      .from("vacation_spots")
-      .then((data) => {
-        // Render the destinations data into `index.ejs` (user requested root use index.ejs)
-        res.render("index", { title: "Home", destinations: data });
-      })
-      .catch((err) => {
-        console.error("Error loading destinations:", err);
-        res.status(500).send("Unable to load destinations");
-      });
-});
+app.get("/", async (req, res) => {
+   try {
+     const { geo } = req.query;
+ 
+     // normalize incoming filter (handles "costal" typo)
+     const normalized = (geo || "all").toLowerCase();
+     const wanted = normalized === "costal" ? "coastal" : normalized;
+ 
+     // Build query with join to get the geographic name
+     const qb = knex({ v: "vacation_spots" })
+       .leftJoin({ g: "geographic_type" }, "v.GeographicID", "g.GeographicID")
+       // alias columns to what the EJS expects
+       .select([
+         "v.VacationID as id",
+         "v.VacationName as vacationName",
+         "v.Cost as cost",
+         "v.image_url as image_url",
+         "v.TerrainID as terrainId",
+         "v.GeographicID as geographicId",
+         "v.ClimateID as climateId",
+         "g.GeographicName as geographicName",
+       ]);
+ 
+     // Optional server-side filter by ?geo=
+     if (wanted !== "all") {
+       qb.whereRaw("LOWER(g.GeographicName) = ?", [wanted]);
+     }
+ 
+     const data = await qb;
+     res.render("index", { title: "Home", destinations: data });
+   } catch (err) {
+     console.error("Error loading destinations:", err);
+     res.status(500).send("Unable to load destinations");
+   }
+ });
+ 
 
 app.get("/about", (req, res) => {
    res.render("about", { title: "About" });
