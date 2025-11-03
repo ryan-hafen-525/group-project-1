@@ -1,22 +1,47 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title><%= title %></title>
-    <link rel="stylesheet" href="/static/styles.css" />
-  </head>
-  <body>
-    <header>
-      <h1>Home</h1>
-      <nav>
-        <a href="/">Home</a>
-        <a href="/about">About</a>
-      </nav>
-    </header>
-    <main>
-      <p>This page is rendered with EJS at <code>/</code>.</p>
-    </main>
-  </body>
-  </html>
+   <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title><%= title %></title>
+      <link rel="stylesheet" href="/static/styles.css" />
+   </head>
+   <body>
+      <header>
+         <h1>Home</h1>
+         <nav>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/destinations-demo">Demo</a>
+         </nav>
+      </header>
+      <main>
+         <section class="container">
+            <h2 class="sr-only">All locations</h2>
 
+            <% if (destinations && destinations.length) { %>
+            <div class="grid">
+               <% destinations.forEach(function(dest) { %> <% const imageSrc = dest.image_url || ''; %>
+               <article class="card">
+                  <div class="card-media">
+                     <% if (imageSrc) { %>
+                     <img src="<%= imageSrc %>" alt="Photo of <%= dest.vacationName %>" loading="lazy" />
+                     <% } else { %>
+                     <div class="placeholder" aria-hidden="true">
+                        <span><%= (dest.vacationName || "?").charAt(0) %></span>
+                     </div>
+                     <% } %>
+                  </div>
+                  <div class="card-body">
+                     <h3 class="card-title"><%= dest.vacationName || 'Unnamed location' %></h3>
+                  </div>
+               </article>
+               <% }); %>
+            </div>
+            <% } else { %>
+            <p class="muted">No destinations available yet.</p>
+            <% } %>
+         </section>
+      </main>
+   </body>
+</html>
