@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dream Vacations</title>
+    <!-- If styles.css is in the same folder as index.html, this is correct -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Choose Your Dream Vacation!</h1>
+    </header>
+
+    <main>
+      <section class="container">
+        <h2 class="sr-only">All locations</h2>
+
+        <div class="filters" role="toolbar" aria-label="Filter by geographic type">
+          <button class="filter-btn" type="button" data-filter="all" aria-pressed="true">
+            All
+          </button>
+          <button class="filter-btn" type="button" data-filter="island" aria-pressed="false">
+            Island
+          </button>
+          <button class="filter-btn" type="button" data-filter="inland" aria-pressed="false">
+            Inland
+          </button>
+          <button class="filter-btn" type="button" data-filter="coastal" aria-pressed="false">
+            Coastal
+          </button>
+        </div>
+
+        <!-- Status / error messages -->
+        <p id="status" class="muted">Loading destinations...</p>
+
+        <!-- Grid will be filled by JavaScript -->
+        <div class="grid" id="destinationsGrid"></div>
+      </section>
+    </main>
+
+    <script>
+      // 🔁 Set this to your actual API endpoint
+      const API_URL = "https://6owpaguptb.execute-api.us-east-2.amazonaws.com/vacations";
+
+      document.addEventListener("DOMContentLoaded", () => {
+        loadDestinations();
+        initFilters();
+      });
+
+      async function loadDestinations() {
+        const statusEl = document.getElementById("status");
+        const grid = document.getElementById("destinationsGrid");
+
+        try {
+          const res = await fetch(API_URL);
+          if (!res.ok) {
+            throw new Error("Network response was not ok");
+          }
+
+          const data = await res.json();
+          const items = Array.isArray(data.Items) ? data.Items : [];
+
+          // Clear grid before rendering
+          grid.innerHTML = "";
+
+          if (!items.length) {
+            statusEl.textContent = "No destinations available yet.";
+            return;
+          }
+
+          // Hide status once we have data
+          statusEl.textContent = "";
+
+          items.forEach((item) => {
+            const name = item.locationid || "Unnamed location";
+            const geoRaw = (item.locationtype || "").toString().toLowerCase();
+            const geo = geoRaw === "costal" ? "coastal" : geoRaw; // just in case
+
+            // Create card
+            const article = document.createElement("article");
+            article.className = "card";
+            article.setAttribute("data-geo", geo);
+
+            // Media (simple placeholder image using the location name)
+            const media = document.createElement("div");
+            media.className = "card-media";
+
+            const img = document.createElement("img");
+            img.src =
+              "https://via.placeholder.com/400x250?text=" +
+              encodeURIComponent(name);
+            img.alt = "Photo of " + name;
+            img.loading = "lazy";
+
+            media.appendChild(img);
+
+            // Body
+            const body = document.createElement("div");
+            body.className = "card-body";
+
+            const title = document.createElement("h3");
+            title.className = "card-title";
+            title.textContent = name;
+
+            body.appendChild(title);
+
+            if (geo) {
+              const chip = document.createElement("span");
+              chip.className = "chip";
+              chip.textContent = geo.charAt(0).toUpperCase() + geo.slice(1);
+              body.appendChild(chip);
+            }
+
+            article.appendChild(media);
+            article.appendChild(body);
+            grid.appendChild(article);
+          });
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent =
+            "Sorry, there was a problem loading destinations.";
+        }
+      }
+
+      function initFilters() {
+        const buttons = document.querySelectorAll(".filter-btn");
+
+        // Optional: preselect using ?geo=island|inland|coastal
+        const params = new URLSearchParams(location.search);
+        const initial = (params.get("geo") || "all").toLowerCase();
+
+        setFilter(initial);
+
+        buttons.forEach((btn) => {
+          btn.addEventListener("click", () => setFilter(btn.dataset.filter));
+        });
+
+        function setFilter(filter) {
+          const normalized = filter === "costal" ? "coastal" : filter;
+          const cards = document.querySelectorAll(".grid .card");
+
+          buttons.forEach((b) =>
+            b.setAttribute(
+              "aria-pressed",
+              String(b.dataset.filter === filter)
+            )
+          );
+
+          if (normalized === "all") {
+            cards.forEach((c) => c.classList.remove("is-hidden"));
+            return;
+          }
+
+          cards.forEach((card) => {
+            const cardGeo = (card.getAttribute("data-geo") || "").toLowerCase();
+            if (cardGeo === normalized) card.classList.remove("is-hidden");
+            else card.classList.add("is-hidden");
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
